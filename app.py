@@ -1,24 +1,28 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
 
-# Titel der App
-st.title("Meine erste Streamlit App")
+# === Seitentitel und Beschreibung ===
+st.set_page_config(page_title="Fake News Checker", page_icon="🧠")
+st.title("🧠 Fake-News Erkennung")
+st.markdown("Gib unten eine Aussage oder einen Tweet ein. Das System prüft später mithilfe eines KI-Modells, ob es sich um Fake News handelt – und erklärt ggf. den wahren Hintergrund.")
 
-# Seitenleiste
-st.sidebar.header("Einstellungen")
-user_name = st.sidebar.text_input("Ihr Name", "Gast")
+# === Texteingabe ===
+user_input = st.text_area("📝 Deine Aussage oder Tweet", placeholder="z. B. 'Die Erde ist flach.'", height=150)
 
-# Hauptbereich
-st.write(f"Willkommen, {user_name}!")
+# === Analyse starten ===
+if st.button("🔍 Prüfen"):
+    if not user_input.strip():
+        st.warning("Bitte gib einen Text ein.")
+    else:
+        # === Platzhalter: KI-Modell zur Fake-News-Erkennung ===
+        # Ersetze dies später mit eurem Klassifikator (z. B. model.predict(...))
+        st.info("📌 Klassifikator läuft hier bald...")
+        fake_or_real = "❓ Noch kein Ergebnis – KI-Modell fehlt"
 
-# Beispiel-Daten
-data = pd.DataFrame({
-    'Datum': pd.date_range('2024-01-01', periods=10),
-    'Werte': np.random.randn(10).cumsum()
-})
-#dfdsaf
-# Datenvisualisierung
-st.subheader("Beispiel-Diagramm")
-st.line_chart(data.set_index('Datum'))
+        # === Platzhalter-Ergebnis anzeigen ===
+        st.markdown(f"### Ergebnis: {fake_or_real}")
 
+        # === Falls Fake – Erklärung generieren (Platzhalter) ===
+        if fake_or_real.startswith("❌"):
+            # Später z. B. mit GPT oder LLM ersetzen
+            st.markdown("### 🧾 Erklärung")
+            st.info("📌 Hier erscheint später eine automatisch generierte Erklärung, warum das Fake ist.")
