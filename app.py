@@ -22,3 +22,4 @@ data = pd.DataFrame({
 st.subheader("Beispiel-Diagramm")
 st.line_chart(data.set_index('Datum'))
 
+print(123)
