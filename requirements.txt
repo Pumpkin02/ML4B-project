@@ -1,2 +1,5 @@
-streamlit==1.32.0
-pandas==2.2.1 
+streamlit==1.45.1
+pandas==2.2.3
+nltk==3.9.1
+scikit-learn==1.7.0
+stop-words==2018.7.23
