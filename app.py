@@ -6,100 +6,99 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from stop_words import get_stop_words
 
-# 页面配置
+# Page configuration
 st.set_page_config(page_title="Fake News Checker", page_icon="🧠")
-st.title("🧠 Fake-News Erkennung")
+st.title("🧠 Fake-News Detection")
 st.markdown(
-    "Gib unten eine Aussage oder einen Tweet ein. "
-    "Das System prüft per TF-IDF + Cosine Similarity, "
-    "ob der Text bekannten Fake News ähnelt und gibt ein Ergebnis."
+    "Enter a statement or tweet below. "
+    "The system will use TF-IDF + cosine similarity "
+    "to check whether the text resembles known fake news."
 )
 
-# —— 侧边栏：上传假新闻和推文文件（支持 csv 和 xlsx） ——
-st.sidebar.header("Daten hochladen")
+# Sidebar: upload fake news and tweets files (supports CSV and XLSX)
+st.sidebar.header("Upload Data")
 fake_file = st.sidebar.file_uploader(
-    "Fake-News Datei (CSV oder XLSX)", type=['csv','xlsx']
+    "Fake News File (CSV or XLSX)", type=['csv', 'xlsx']
 )
 train_file = st.sidebar.file_uploader(
-    "Tweets Datei (CSV oder XLSX)", type=['csv','xlsx']
+    "Tweets File (CSV or XLSX)", type=['csv', 'xlsx']
 )
 
 if not fake_file or not train_file:
-    st.warning("Bitte lade zuerst sowohl die Fake-News als auch die Tweets Datei hoch!")
+    st.warning("Please upload both the fake news file and the tweets file first!")
     st.stop()
 
-# —— 根据后缀自动读取 —— 
+# Automatically load dataframe based on file extension
 def load_df(file):
     name = file.name.lower()
     if name.endswith('.csv'):
         return pd.read_csv(file)
-    elif name.endswith(('.xls','.xlsx')):
+    elif name.endswith(('.xls', '.xlsx')):
         return pd.read_excel(file, engine='openpyxl')
     else:
-        st.error("Unbekanntes Dateiformat: " + name)
+        st.error("Unknown file format: " + name)
         st.stop()
 
 df_fake  = load_df(fake_file)
 df_train = load_df(train_file)
 
-# 文本预处理
+# Text preprocessing
 df_fake ['text_clean'] = df_fake ['text']
 df_train['text_clean'] = df_train['text']
 
-# 丢弃空值
-df_fake = df_fake.dropna(subset=['text_clean'])   
-df_train = df_train.dropna(subset=['text_clean'])   
+# Drop rows with missing text
+df_fake  = df_fake.dropna(subset=['text_clean'])
+df_train = df_train.dropna(subset=['text_clean'])
 
 # Combine the corpora for fitting the TF-IDF vectorizer
-combined_texts = df_fake['text'].tolist() + df_train['text_clean'].tolist()
+combined_texts = df_fake['text_clean'].tolist() + df_train['text_clean'].tolist()
 
-
-
-# Load German stopwords via nltk
-
-# —— 取出德语停用词列表 —— 
+# Load German stopwords via stop-words package
 german_stopwords = get_stop_words('german')
 
-
-# TF-IDF 矢量化（德语停用词）
+# TF-IDF vectorization (with German stopwords)
 vectorizer = TfidfVectorizer(
     stop_words=german_stopwords,
     max_features=5000
 )
 fake_tfidf = vectorizer.fit_transform(df_fake['text_clean'].tolist())
 
-# 用户输入
+# User input
 user_input = st.text_area(
-    "📝 Deine Aussage oder Tweet",
-    placeholder="z. B. 'Die Erde ist flach.'",
+    "📝 Your statement or tweet",
+    placeholder="e.g. 'Die Erde ist flach.'",
     height=150
 )
 
-# 按钮触发
-if st.button("🔍 Prüfen"):
+# Button trigger
+if st.button("🔍 Check"):
     text = user_input.strip()
     if not text:
-        st.warning("Bitte gib einen Text ein.")
+        st.warning("Please enter some text.")
     else:
-        # 1. 对输入文本做 TF-IDF
+        # Apply TF-IDF to the input text
         input_tfidf = vectorizer.transform([text])
-        # 2. 计算余弦相似度并取最大
+        
+        # Compute cosine similarity and take the maximum score
         sim_scores = cosine_similarity(input_tfidf, fake_tfidf)
         max_score  = sim_scores.max()
-        # 3. 根据阈值打标签
+
+        # Assign label based on threshold
         if max_score >= 0.7:
             label = "❌ Fake News"
         elif max_score <= 0.3:
-            label = "✅ Echte News"
+            label = "✅ Real News"
         else:
-            label = "❓ Unklar"
-        # 4. 显示结果
-        st.markdown(f"### Ergebnis: {label}")
-        st.write(f"Ähnlichkeitswert: {max_score:.3f}")
-        # 5. 假新闻时的解释占位
+            label = "❓ Uncertain"
+
+        # Display the result
+        st.markdown(f"### Result: {label}")
+        st.write(f"Similarity score: {max_score:.3f}")
+
+        # Placeholder explanation for fake news
         if label.startswith("❌"):
-            st.markdown("### 🧾 Erklärung")
+            st.markdown("### 🧾 Explanation")
             st.info(
-                "Der Text ähnelt bekannten Fake News. "
-                "Hier könnte später ein LLM die genaue Falschbehauptung erläutern."
+                "The text resembles known fake news. "
+                "An LLM could later provide a detailed explanation of the false claim."
             )
