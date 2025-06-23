@@ -146,8 +146,6 @@ We structured our approach as follows:
 
 ## 3.2 Data Understanding and Preparation
 
-- Introduce the dataset to the reader
-
 Bundestag Twitter Data
 
 <https://faubox.rrze.uni-erlangen.de/getlink/fi8W52QUEdtmm7LEGLiDBD/twitter-bundestag-2022.tar.gz>
@@ -156,48 +154,31 @@ Real & Fake News
 
 <https://www.kaggle.com/datasets/razanaqvi14/real-and-fake-news>
 
-TWINT Open Source
-
 - The Bundestag dataset contains a .jl file with tweets from Members of Parliament, where each item includes metadata and the tweet content itself.
 - The Real & Fake News dataset consists of two CSV files: one with true news articles and the other with fake ones. Key attributes of this data include title, text, subject, and date of publication.
 - A notable challenge is the difference in data formats and data richness between the two datasets.
-- In the data preparation phase, we need to select relevant features, drop irrelevant ones, and format the data to work with the all-MiniLM-L6-v2 sentence transformer.
 
 ## 3.3 Modeling and Evaluation
 
-- Describe the model architecture(s) you selected
-
-We selected the all-MiniLM-L6-v2 model for its suitability in analyzing short texts such as tweets.The architecture is based of BERT a Natural Language Process model. All-MiniLM-L6-v2 builds on the contextual understanding capabilities of BERT. The model is specifically optimized for semantic tasks, generating dense embeddings that capture nuanced relationships in brief texts like tweets. It is pre-trained on diverse Texts, like Wikipedia, books, and web articles, eliminating the need for additional training.Furthermore the multilingual support ensures effectiveness with German-language tweets, which is critical for analyzing content from the AfD. Additionally, the model’s compact size (80 MB) allows for rapid processing of large datasets, making it practical for scalable analysis.
-
-- Describe how you train your models
-- Describe how you evaluate your models/ which metrics you use
-
-Combined quantitative and qualitative evaluation:
-
-- **Quantitative Metrics**:
-  - **Cosine Similarity**:
-    - Calculate the average similarity between each tweet and all fake/news articles.
-    - Formula:
-    - Similarity<sub>­­fake</sub> \= cos (<sub>Tweet, i</sub>)
-    - **Thresholding**: Tweets with similarity > 0.7 were flagged as high-risk.
-  - **Delta Similarity**:
-    - Difference between fake and true news similarity to identify tweets closer to fake news:
-    - Formula:
-
-\= Similarity<sub>fake</sub> \- Similarity<sub>true</sub>
-
-- **Qualitative Validation**:
-  - **Manual Review**: 50 high-similarity tweets are going to get analyzed for alignment with fake-news patterns (e.g., conspiracy claims, emotional language).
+We decided on a bag of words approach built around TF-IDF features.The data preprocessing starts with removing unnecessary characters such as emojis, URLs, hashtags, mentions etc. Each tweet is reduced to text, lower-cased and stripped of German stop-words. The cleaned tweets are then merged with a fake-news collection to form a single corpus. A TF-IDF vectoriser is trained unsupervised on this joint corpus so that terms from both domains appear in the vocabulary. At inference time the incoming text is transformed with that same vectoriser and its vector is compared with the cosine similarity to all stored fake-news vectors. We interpret the score with simple thresholds: 0.70 or higher is classed as Fake, 0.30 or lower as Real, and anything in between as Uncertain. The entire system runs in one Streamlit app.For evaluation we prepare a labelled validation set containing both real and fake texts. We will sweep the similarity threshold to find the point that achieves the preferred balance.
 
 # 4 Results
 
-&nbsp;
+**4.1 Artifacts**
 
-- Describe what artifacts you have build
-- Describe the libraries and tools you use
-- Describe the concept of your app
-- Describe the results you achieve by applying your trained models on unseen data
-- Descriptive Language (no judgement, no discussion in this section -> just show what you built)
+- App.py
+
+App.by is both the Streamlit front-end and the model’s inference engine. The script defines the page title, icon and a single-screen layout where users can either upload a curated fake-news reference file plus a batch of tweets (CSV or XLSX) or paste a single statement into a text box. A helper routine detects whether each upload is CSV or Excel, loads the data with pandas and halts with a clear Streamlit error if the format is unsupported. It then loads German stop-words from the stop-words package, instantiates a TfidfVectorizer with 5 000 features, fits it on the cleaned fake-news texts and stores the resulting TF-IDF matrix as the reference. For every uploaded tweet or typed statement the script generates a TF-IDF vector, computes its cosine similarity to the reference matrix, keeps the highest score and assigns a label: scores ≥ 0.70 are Fake, scores ≤ 0.30 are Real, and anything in between is Uncertain. The interface displays the label, the similarity score to three decimal places and when the label is Fake an empty panel where an LLM could later insert an explanation.
+
+- Datacleaning.py
+
+Datacleaning.py can be seen as a preprocessing tool for turning raw Twitter data into a modelling-ready CSV. The script walks through every file and every tweet, applying its clean_text() routine: emojis are stripped using a broad Unicode range; URLs, hashtags, @-mentions and surplus punctuation are removed with concise regular expressions; German umlauts (ä, ö, ü) and “ß” are preserved; all text is lower-cased. For each tweet the cleaned text, user handle, tweet ID and timestamp are stored in memory and ultimately written to a single cleaned_tweets.csv.
+
+- ML4B.ipynb
+
+**4.2 Concept of the App**
+
+The system is built on the following Python stack: Scikit-learn 1.7.0 supplies the TfidfVectorizer for feature extraction and cosine_similarity for distance measurement, while pandas 2.2.3 manages dataset loading, column cleaning, table joins and CSV/XLSX export. For language processing, NLTK 3.9.1 provides the standard German stop-word list, which we extend with additional social-media terms from the stop-words package (version 2018-07-23). Streamlit 1.45.1 serves as the web interface.The development takes place in Jupyter notebooks on Google Colab and in Visual Studio Code. All dependency versions are pinned in requirements.txt. The Streamlit application follows a simple workflow. First, the user is prompted to upload two files.A fake-news dataset and a general tweets dataset.Both files are required to be in CSV or XLSX format.Now the user is able to type in a statement.Once the statement is submitted, the app processes each text, computes the cosine-similarity score against the fake-news vectors, and returns a notification indicating whether the text is classified as Fake, Real or Uncertain, alongside with its similarity score.
 
 # 5 Discussion
 
