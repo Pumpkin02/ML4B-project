@@ -1,43 +1,3 @@
-Inhalt
-
-[1 Introduction 2](#_Toc199212127)
-
-1.1 Motivation
-
-1.2 Research Question
-
-1.3 Structure of This Document
-
-[2 Related Work 2](#_Toc199212129)
-
-2.1 Traditional Approaches to Fake News Detection
-
-2.2 Political Tweets and Misinformation
-
-2.3 Multilingual and Cross-Lingual Models
-
-2.4 Gaps and Novelty of Our Approach
-
-[3 Methodology 2](#_Toc199212130)
-
-[3.1 General Methodology 2](#_Toc199212131)
-
-[3.2 Data Understanding and Preparation 3](#_Toc199212132)
-
-[3.3 Modeling and Evaluation 3](#_Toc199212133)
-
-[4 Results 4](#_Toc199212134)
-
-[5 Discussion 4](#_Toc199212135)
-
-5.1 Project Outcomes and Contributions
-
-5.2 Limitations
-
-5.3 Ethical Considerations
-
-5.4 Future Research Directions
-
 # 1 Introduction
 
 **1\. Introduction**
@@ -68,6 +28,46 @@ This document is structured as follows:
     Discusses limitations, ethical considerations, societal impact, and possible misuse. Also proposes directions for future research.
 - **Section 6 – Conclusion:**  
     Summarizes key findings and reflects on the broader relevance of this work.
+
+Inhalt
+
+[1 Introduction ](#_Toc199212127)
+
+1.1 Motivation
+
+1.2 Research Question
+
+1.3 Structure of This Document
+
+[2 Related Work ](#_Toc199212129)
+
+2.1 Traditional Approaches to Fake News Detection
+
+2.2 Political Tweets and Misinformation
+
+2.3 Multilingual and Cross-Lingual Models
+
+2.4 Gaps and Novelty of Our Approach
+
+[3 Methodology ](#_Toc199212130)
+
+[3.1 General Methodology ](#_Toc199212131)
+
+[3.2 Data Understanding and Preparation ](#_Toc199212132)
+
+[3.3 Modeling and Evaluation ](#_Toc199212133)
+
+[4 Results ](#_Toc199212134)
+
+[5 Discussion ](#_Toc199212135)
+
+5.1 Project Outcomes and Contributions
+
+5.2 Limitations
+
+5.3 Ethical Considerations
+
+5.4 Future Research Directions
 
 # 2 Related Work
 
