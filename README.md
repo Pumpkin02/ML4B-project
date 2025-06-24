@@ -103,8 +103,6 @@ By combining semantic similarity, multilingual capability, and three-tier classi
 
 ## 3.1 General Methodology
 
-**3.1 General Methodology**
-
 Our goal was to semantically assess political tweets by comparing them with a known fake news dataset and categorizing each tweet as true, false, or uncertain. To do this, we built a two-part system:
 
 1. A backend pipeline for cleaning and preparing large-scale tweet data
