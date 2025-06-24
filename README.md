@@ -1,20 +1,58 @@
-# 1 Introduction
-
-**1\. Introduction**
-
-**1.1 Motivation**
+**Motivation**
 
 In an era of increasing political polarization and widespread disinformation, the ability to verify the truthfulness of online political communication has become both technically and socially vital. Social media platforms, especially Twitter, serve as major channels for political messaging, but also for the rapid spread of fake news. Manual fact-checking is time-consuming and resource-intensive, making automated, AI-driven solutions increasingly relevant.
 
 This project aims to address this challenge by developing a machine learning project that can analyze political tweets and classify them based on their semantic similarity to verified fake or true content. By using modern transformer-based models and multilingual capabilities, we explore a new approach to automated fact assessment.
+Inhalt
 
-**1.2 Research Question**
+[1 Introduction ](#_Toc199212127)
+
+1.1 Motivation
+
+1.2 Research Question
+
+1.3 Structure of This Document
+
+[2 Related Work ](#_Toc199212129)
+
+2.1 Traditional Approaches to Fake News Detection
+
+2.2 Political Tweets and Misinformation
+
+2.3 Multilingual and Cross-Lingual Models
+
+2.4 Gaps and Novelty of Our Approach
+
+[3 Methodology ](#_Toc199212130)
+
+[3.1 General Methodology ](#_Toc199212131)
+
+[3.2 Data Understanding and Preparation ](#_Toc199212132)
+
+[3.3 Modeling and Evaluation ](#_Toc199212133)
+
+[4 Results ](#_Toc199212134)
+
+[5 Discussion ](#_Toc199212135)
+
+5.1 Project Outcomes and Contributions
+
+5.2 Limitations
+
+5.3 Ethical Considerations
+
+5.4 Future Research Directions
+# 1 Introduction
+
+**1\. Introduction**
+
+**1.1 Research Question**
 
 **How can semantic similarity models be used to automatically classify political tweets as true, false, or uncertain by comparing them to a curated fake news dataset?**
 
 We investigate this question through the implementation of a paraphrase-based semantic similarity model and a user-facing prototype application, assessing both the technical performance and the social implications of such a system.
 
-**1.3 Structure of This Document**
+**1.2 Structure of This Document**
 
 This document is structured as follows:
 
