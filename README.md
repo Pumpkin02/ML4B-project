@@ -48,8 +48,6 @@ Inhalt
 [5.4 Future Research Directions](#54-future-research-directions)
 # 1 Introduction
 
-## 1\. Introduction
-
 ## 1.1 Research Question
 
 **How can semantic similarity models be used to automatically classify political tweets as true, false, or uncertain by comparing them to a curated fake news dataset?**
