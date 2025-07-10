@@ -1,33 +1,26 @@
 import streamlit as st
 import pandas as pd
+import re
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.neighbors import NearestNeighbors
 from stop_words import get_stop_words
 
 # Seite konfigurieren
 st.set_page_config(page_title="🧠 Fake-News Checker", page_icon="🧠", layout="centered")
 
-# Design-Auswahl in Sidebar
+# Sidebar – Dark Mode
 st.sidebar.header("🎨 Einstellungen")
 dark_mode = st.sidebar.toggle("🌙 Dark Mode aktivieren", value=False)
 
-# CSS Dark/Light Theme
+# CSS-Styling
 if dark_mode:
     st.markdown("""
         <style>
-        body {
+        body, .stApp {
             background-color: #0e1117;
             color: #FAFAFA;
         }
-        .stApp {
-            background-color: #0e1117;
-            color: #FAFAFA;
-        }
-        .css-1v0mbdj, .css-1d391kg, .stTextInput>div>div>input {
-            background-color: #262730 !important;
-            color: #FAFAFA !important;
-        }
+        .stTextInput>div>div>input,
         .stTextArea textarea {
             background-color: #262730 !important;
             color: #FAFAFA !important;
@@ -44,19 +37,17 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-# Titel & Beschreibung
+# Titel
 st.title("🧠 Fake-News Detection mit Ähnlichkeitsanalyse")
-st.markdown("""
-Gib unten eine Aussage oder einen Tweet ein.  
-Das System prüft mithilfe von **TF-IDF + Cosine Similarity**, ob der Text bekannten Fake-News ähnelt.
-""")
+st.markdown("Wähle unten einen Tweet basierend auf Schlagwörtern zur Analyse. "
+            "Das System prüft mithilfe von **TF-IDF + Cosine Similarity**, ob der Text bekannten Fake-News ähnelt.")
 
-# Seitenleiste – Dateiupload
-st.sidebar.subheader("📁 Daten hochladen (CSV oder Excel)")
+# Upload-Bereich
+st.sidebar.subheader("📁 Daten hochladen (CSV/XLSX)")
 fake_file = st.sidebar.file_uploader("📰 Fake-News-Datei", type=['csv', 'xlsx'])
 tweet_file = st.sidebar.file_uploader("🐦 Tweets-Datei", type=['csv', 'xlsx'])
 
-# Funktion zum sicheren Laden der Datei
+# Funktion zum Laden
 def load_df(file, name=""):
     if not file:
         return None
@@ -73,7 +64,6 @@ def load_df(file, name=""):
     st.dataframe(df.head(3))
     return df
 
-# Daten laden
 df_fake = load_df(fake_file, "Fake-News")
 df_tweets = load_df(tweet_file, "Tweets")
 
@@ -81,6 +71,7 @@ if df_fake is None or df_tweets is None:
     st.warning("⚠️ Bitte lade **beide Dateien** hoch.")
     st.stop()
 
+# Text-Spalte sicherstellen
 if 'text' not in df_fake.columns and 'text_clean' in df_fake.columns:
     df_fake['text'] = df_fake['text_clean']
 if 'text' not in df_tweets.columns and 'text_clean' in df_tweets.columns:
@@ -100,10 +91,10 @@ def preprocess(df):
 df_fake = preprocess(df_fake)
 df_tweets = preprocess(df_tweets)
 
-# Stopwords laden
+# Stopwords
 stopwords = get_stop_words('german')
 
-# TF-IDF vorbereiten & cachen
+# TF-IDF + Nearest Neighbors vorbereiten
 @st.cache_resource
 def prepare_vectorizer_and_index(fake_texts, all_texts):
     vectorizer = TfidfVectorizer(stop_words=stopwords, max_features=5000)
@@ -118,49 +109,73 @@ vectorizer, fake_tfidf, nn_index = prepare_vectorizer_and_index(
     df_fake['text_clean'].tolist() + df_tweets['text_clean'].tolist()
 )
 
-# Benutzereingabe
-st.subheader("📝 Dein Text")
-user_input = st.text_area("Was möchtest du prüfen?", placeholder="z. B. 'Die Erde ist flach.'", height=150)
+# Schlagwort-Auswahl
+st.subheader("🧩 Thema wählen")
 
+# Aussagekräftige Schlagwörter (statisch definiert oder auch aus Tweets extrahierbar)
+keywords = [
+    "Corona", "Impfung", "Ausländer", "Migration", "Wahlbetrug", "Klima", "AfD",
+    "Ukraine", "Russland", "Biden", "Trump", "Islam", "Gender", "Zensur",
+    "Meinungsfreiheit", "Klimawandel", "Kriminalität", "Flüchtlinge", "WHO", "Impfpflicht"
+]
+
+selected_keyword = st.selectbox("🔍 Wähle ein Schlagwort:", sorted(keywords))
+
+# Keyword-Index vorbereiten (gecached)
+@st.cache_resource
+def build_keyword_index(texts, keywords):
+    index = {}
+    for keyword in keywords:
+        mask = texts.str.contains(rf"\b{re.escape(keyword)}\b", case=False, na=False)
+        index[keyword] = texts[mask].tolist()
+    return index
+
+tweet_index = build_keyword_index(df_tweets['text_clean'], keywords)
+
+# Tweets zur Auswahl
+filtered_texts = tweet_index.get(selected_keyword, [])
+
+if not filtered_texts:
+    st.warning("⚠️ Keine Tweets mit diesem Schlagwort gefunden.")
+    st.stop()
+
+selected_tweet = st.selectbox("📌 Wähle einen Tweet zur Analyse:", options=filtered_texts)
+
+# Analyse starten
 if st.button("🔍 Fake-News prüfen"):
-    text = user_input.strip()
-    if not text:
-        st.warning("⚠️ Bitte gib einen Text ein.")
+    input_vec = vectorizer.transform([selected_tweet])
+    distances, indices = nn_index.kneighbors(input_vec, return_distance=True)
+    top_scores = 1 - distances.flatten()
+    max_score = top_scores.max()
+
+    if max_score >= 0.7:
+        result = "❌ Fake News"
+        explanation = "Der Text ähnelt stark bekannten Falschmeldungen."
+    elif max_score <= 0.3:
+        result = "✅ Eher seriös"
+        explanation = "Der Text unterscheidet sich deutlich von bekannten Fake-News."
     else:
-        input_vec = vectorizer.transform([text])
-        distances, indices = nn_index.kneighbors(input_vec, return_distance=True)
-        top_scores = 1 - distances.flatten()
-        max_score = top_scores.max()
+        result = "❓ Unklar"
+        explanation = "Der Text liegt im Graubereich – könnte teilweise Fake-News enthalten."
 
-        if max_score >= 0.7:
-            result = "❌ Fake News"
-            explanation = "Der Text ähnelt stark bekannten Falschmeldungen."
-        elif max_score <= 0.3:
-            result = "✅ Eher seriös"
-            explanation = "Der Text unterscheidet sich deutlich von bekannten Fake-News."
-        else:
-            result = "❓ Unklar"
-            explanation = "Der Text liegt im Graubereich – könnte teilweise Fake-News enthalten."
+    st.markdown(f"## 🧾 Ergebnis: {result}")
+    st.metric(label="Ähnlichkeitswert", value=f"{max_score:.3f}")
+    st.info(explanation)
 
-        st.markdown(f"## 🧾 Ergebnis: {result}")
-        st.metric(label="Ähnlichkeitswert", value=f"{max_score:.3f}")
-        st.info(explanation)
-
-        if result.startswith("❌"):
-            st.markdown("### 🤖 Erklärung durch KI")
-            with st.spinner("Generiere eine Begründung..."):
-                keywords = ["flach", "impfung", "klima", "5g", "chip", "geheim", "gates", "covid", "corona"]
-                matched = [k for k in keywords if k.lower() in text.lower()]
-                if matched:
-                    keyword_str = ", ".join(matched)
-                    gpt_reason = (
-                        f"Der Text enthält Schlagworte wie **{keyword_str}**, "
-                        f"die häufig in bekannten Verschwörungserzählungen oder Falschinformationen vorkommen. "
-                        f"Daher liegt der Verdacht nahe, dass es sich um eine Fake-News handelt."
-                    )
-                else:
-                    gpt_reason = (
-                        "Der Text ähnelt stark bekannten Fake-News in Struktur oder Inhalt. "
-                        "Eine genauere Analyse könnte mithilfe von Faktenchecks erfolgen."
-                    )
-                st.success(gpt_reason)
+    if result.startswith("❌"):
+        st.markdown("### 🤖 Erklärung durch KI")
+        with st.spinner("Generiere eine Begründung..."):
+            matched = [k for k in keywords if k.lower() in selected_tweet.lower()]
+            if matched:
+                keyword_str = ", ".join(matched)
+                gpt_reason = (
+                    f"Der Text enthält Schlagworte wie **{keyword_str}**, "
+                    f"die häufig in bekannten Verschwörungserzählungen oder Falschinformationen vorkommen. "
+                    f"Daher liegt der Verdacht nahe, dass es sich um eine Fake-News handelt."
+                )
+            else:
+                gpt_reason = (
+                    "Der Text ähnelt stark bekannten Fake-News in Struktur oder Inhalt. "
+                    "Eine genauere Analyse könnte mithilfe von Faktenchecks erfolgen."
+                )
+            st.success(gpt_reason)
