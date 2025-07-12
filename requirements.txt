@@ -32,6 +32,7 @@ requests==2.32.4
 rpds-py==0.26.0
 scikit-learn==1.7.0
 scipy==1.16.0
+sentence-transformers
 six==1.17.0
 smmap==5.0.2
 stop-words==2018.7.23
