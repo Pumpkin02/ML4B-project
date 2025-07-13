@@ -3,7 +3,6 @@
 In an era of increasing political polarization and widespread disinformation, the ability to verify the truthfulness of online political communication has become both technically and socially vital. Social media platforms, especially Twitter, serve as major channels for political messaging, but also for the rapid spread of fake news. Manual fact-checking is time-consuming and resource-intensive, making automated, AI-driven solutions increasingly relevant.
 
 This project aims to address this challenge by developing a machine learning project that can analyze political tweets and classify them based on their semantic similarity to verified fake or true content. By using modern transformer-based models and multilingual capabilities, we explore a new approach to automated fact assessment.
-Inhalt
 
 # Contents #
 
@@ -50,9 +49,9 @@ Inhalt
 
 ## 1.1 Research Question
 
-**How can semantic similarity models be used to automatically classify political tweets as true, false, or uncertain by comparing them to a curated fake news dataset?**
+**How can semantic similarity models be used to automatically classify political tweets as true, false, or unclear by comparing them to a curated fake and true news dataset?**
 
-We investigate this question through the implementation of a paraphrase-based semantic similarity model and a user-facing prototype application, assessing both the technical performance and the social implications of such a system.
+We investigate this question through the implementation of a semantic similarity model based on multilingual sentence embeddings and a user-facing prototype application, assessing both the technical performance and the social implications of such a system.
 
 ## 1.2 Structure of This Document
 
@@ -72,7 +71,7 @@ This document is structured as follows:
 
 # 2 Related Work
 
-Fake news detection, particularly in political contexts, has become a critical area of research due to the growing impact of false information on public discourse. Most previous work has focused on binary classification and the use of large-scale language models for identifying the accuracy of claims, but none have directly implemented a paraphrase-based, three-way classification model on political tweets using multilingual techniques. This highlights a new contribution of our project.
+Fake news detection, particularly in political contexts, has become an increasingly important research area due to the widespread influence of misinformation on public opinion and democratic discourse. While most previous approaches have focused on binary classification tasks using large-scale language models, our project introduces a novel multilingual, semantic similarity-based model that performs three-way classification (true, false, uncertain) on political tweets. This represents a new contribution by combining transformer-based sentence embeddings with similarity thresholds in a multilingual political domain.
 
 ## 2.1 Traditional Approaches to Fake News Detection
 
@@ -88,25 +87,25 @@ Ornstein et al. (2025) applied large language models like GPT-3 and GPT-4 for po
 
 ## 2.3 Multilingual and Cross-Lingual Models
 
-Our project is particularly notable by its use of a multilingual paraphrase model (paraphrase-multilingual-MiniLM-L12-v2). In contrast, other studies like Kar et al. (2020) and Kazemi et al. (2022) employed multilingual transformer models such as mBERT, XLM-RoBERTa, and LaBSE for tasks like zero-shot learning or fact-check matching across languages. Kazemi et al. reported 86% accuracy in cross-lingual fact-check matching, demonstrating the possibility of multilingual applications but without three-class output.
+Our project stands out through the use of a multilingual semantic similarity model (paraphrase-multilingual-MiniLM-L12-v2) to perform three-way classification (true, false, unclear) of political tweets. In contrast, prior studies such as Kar et al. (2020) and Kazemi et al. (2022) utilized transformer models like mBERT, XLM-RoBERTa, or LaBSE for tasks such as zero-shot learning or multilingual fact-check retrieval. Although Kazemi et al. achieved up to 86% accuracy in cross-lingual fact-check matching, their models were limited to binary outputs and did not address three-class semantic comparison or tweet-level classification.
 
 ## 2.4 Gaps and Novelty of Our Approach
 
-To date, no known study has used a paraphrase-based embedding model to compare political tweets with a fake news dataset and then classify them into three categories: true, false, and uncertain. Most prior research:
+To date, no known study has used a multilingual semantic similarity model to compare political tweets against a labeled fake news dataset and classify them into three categories: true, false, and unclear. Most existing research:
 
-- Relies on binary classification (true/false).
-- Uses monolingual data, primarily in English.
-- Lacks semantic similarity-based comparison across datasets.
+- Focuses on binary classification (true/false).
+- Works with monolingual datasets, primarily in English.
+- Does not leverage cross-dataset semantic similarity for classification.
 
-By combining semantic similarity, multilingual capability, and three-tier classification, our project introduces a new methodological model for assessing political content and misinformation.
+By integrating semantic similarity analysis, multilingual processing, and a three-way classification framework, our project introduces a novel methodological approach for assessing political content and misinformation.
 
 # 3 Methodology
 
 ## 3.1 General Methodology
 
-Our goal was to semantically assess political tweets by comparing them with a known fake news dataset and categorizing each tweet as true, false, or uncertain. To do this, we built a two-part system:
+Our goal was to semantically assess political tweets by comparing them with a known fake/true news dataset and categorizing each tweet as true, false, or unclear. To do this, we built a two-part system:
 
-1. A backend pipeline for cleaning and preparing large-scale tweet data
+1. A backend pipeline for cleaning and preparing large-scale tweet data 
 2. A frontend interactive app for users to manually test statements using text similarity detection (TF-IDF + cosine similarity).
 
 We structured our approach as follows:
@@ -114,7 +113,7 @@ We structured our approach as follows:
 1. Data Collection  
     We gathered two datasets:
     - A. jl-based dataset containing raw tweets from various ‘Bundestag’ members
-    - A fake news dataset containing labelled entries (true or false)
+    - A fake/true news dataset containing labelled entries (true or false)
 2. Automated Preprocessing of Political Tweets  
     Using a custom Python script (datacleaning.py) we performed the following:
     - Parsed. jl files and extracted relevant fields (text, created_at, username)
@@ -161,76 +160,210 @@ Real & Fake News
 
 We decided on a bag of words approach built around TF-IDF features.The data preprocessing starts with removing unnecessary characters such as emojis, URLs, hashtags, mentions etc. Each tweet is reduced to text, lower-cased and stripped of German stop-words. The cleaned tweets are then merged with a fake-news collection to form a single corpus. A TF-IDF vectoriser is trained unsupervised on this joint corpus so that terms from both domains appear in the vocabulary. At inference time the incoming text is transformed with that same vectoriser and its vector is compared with the cosine similarity to all stored fake-news vectors. We interpret the score with simple thresholds: 0.70 or higher is classed as Fake, 0.30 or lower as Real, and anything in between as Uncertain. The entire system runs in one Streamlit app.For evaluation we prepare a labelled validation set containing both real and fake texts. We will sweep the similarity threshold to find the point that achieves the preferred balance.
 
+## 3.4 Semantic Embedding & Similarity Analysis (updated)
+We now use the powerful Transformer model distiluse-base-multilingual-cased-v1 (replacing the previously used paraphrase-multilingual-MiniLM-L12-v2) to generate high-quality multilingual sentence embeddings. For each input tweet, we compute semantic similarity against curated fake and true news samples using two methods:
+
+Mean Similarity
+
+For each label (Fake or True), calculate the average cosine similarity between the tweet and all reference embeddings.
+
+Classify based on the higher average.
+
+If the difference between both averages is below a defined threshold (Δ_TH), the tweet is labeled as Unclear.
+
+Max Cosine Similarity
+
+Determine the maximum cosine similarity between the tweet and both the fake and true reference sets.
+
+Classification is based on which maximum is higher.
+
+If both maximums are close (below Δ_TH), the label is set to Unclear.
+
+→ This dual-method approach offers robustness: Mean handles noise and outliers well, while Max captures direct matches. Their combination improves reliability.
+
+
 # 4 Results
 
 ## 4.1 Artifacts
 
-- App.py
+* **`App.py`**
+  `App.py` functions as both the Streamlit front-end and the model inference backend. It presents a simple web interface where users can either:
 
-App.by is both the Streamlit front-end and the model’s inference engine. The script defines the page title, icon and a single-screen layout where users can either upload a curated fake-news reference file plus a batch of tweets (CSV or XLSX) or paste a single statement into a text box. A helper routine detects whether each upload is CSV or Excel, loads the data with pandas and halts with a clear Streamlit error if the format is unsupported. It then loads German stop-words from the stop-words package, instantiates a TfidfVectorizer with 5 000 features, fits it on the cleaned fake-news texts and stores the resulting TF-IDF matrix as the reference. For every uploaded tweet or typed statement the script generates a TF-IDF vector, computes its cosine similarity to the reference matrix, keeps the highest score and assigns a label: scores ≥ 0.70 are Fake, scores ≤ 0.30 are Real, and anything in between is Uncertain. The interface displays the label, the similarity score to three decimal places and when the label is Fake an empty panel where an LLM could later insert an explanation.
+  * upload a political tweets dataset and a fake-news reference dataset (CSV/XLSX), or
+  * input a single statement via a text box.
 
-- Datacleaning.py
+  The app detects file format, loads the data with `pandas`, and embeds all texts using the **multilingual transformer model** `paraphrase-multilingual-MiniLM-L12-v2` from the `sentence-transformers` library. Cosine similarity is calculated between each tweet and the fake-news references.
 
-Datacleaning.py can be seen as a preprocessing tool for turning raw Twitter data into a modelling-ready CSV. The script walks through every file and every tweet, applying its clean_text() routine: emojis are stripped using a broad Unicode range; URLs, hashtags, @-mentions and surplus punctuation are removed with concise regular expressions; German umlauts (ä, ö, ü) and “ß” are preserved; all text is lower-cased. For each tweet the cleaned text, user handle, tweet ID and timestamp are stored in memory and ultimately written to a single cleaned_tweets.csv.
+  Classification is based on maximum similarity:
 
-- ML4B.ipynb
+  * **Fake**: score ≥ 0.70
+  * **Real**: score ≤ 0.30
+  * **Uncertain**: between 0.30 and 0.70
+
+  The result and similarity score (rounded to 3 decimal places) are shown in the app. For Fake classifications, a placeholder panel is rendered to later support LLM-generated justifications.
+
+* **`ML4B.ipynb`**
+  The main development and evaluation notebook. It documents:
+
+  * comparisons between TF-IDF and transformer-based embeddings,
+  * implementation of **mean similarity** and **maximum similarity** classification strategies,
+  * empirical threshold selection,
+  * and discussion of evaluation results.
+    The notebook also shows code snippets for generating embeddings, visualizing similarity scores, and preparing the app workflow.
 
 ## 4.2 Concept of the App
 
-The system is built on the following Python stack: Scikit-learn 1.7.0 supplies the TfidfVectorizer for feature extraction and cosine_similarity for distance measurement, while pandas 2.2.3 manages dataset loading, column cleaning, table joins and CSV/XLSX export. For language processing, NLTK 3.9.1 provides the standard German stop-word list, which we extend with additional social-media terms from the stop-words package (version 2018-07-23). Streamlit 1.45.1 serves as the web interface.The development takes place in Jupyter notebooks on Google Colab and in Visual Studio Code. All dependency versions are pinned in requirements.txt. The Streamlit application follows a simple workflow. First, the user is prompted to upload two files.A fake-news dataset and a general tweets dataset.Both files are required to be in CSV or XLSX format.Now the user is able to type in a statement.Once the statement is submitted, the app processes each text, computes the cosine-similarity score against the fake-news vectors, and returns a notification indicating whether the text is classified as Fake, Real or Uncertain, alongside with its similarity score.
+The app is hosted live at:
+🌐 [http://fakenewserkennung.streamlit.app](http://fakenewserkennung.streamlit.app)
+
+It allows users to test political statements in real time using a multilingual semantic similarity approach. The core system relies on:
+
+* `sentence-transformers`: to generate embeddings with `paraphrase-multilingual-MiniLM-L12-v2`.
+* `scikit-learn`: to compute cosine similarity and handle TF-IDF in baseline comparisons.
+* `pandas`: to process uploaded datasets and export labeled results.
+* `nltk` + `stop-words`: to provide a cleaned and filtered German-language pipeline.
+* `streamlit`: to render a responsive web interface.
+
+All dependencies are pinned in `requirements.txt`. Development took place in Google Colab (for experimentation) and Visual Studio Code (for modularization and deployment).
+
+### Application Workflow
+
+Step-by-Step Process:
+1.Data Upload
+Users upload a file (CSV or XLSX) containing political tweets or statements.
+Each file must contain a username, created_at, and text column.
+
+2.Semantic Embedding
+Each tweet is embedded using the multilingual sentence transformer paraphrase-multilingual-MiniLM-L12-v2.
+A pre-cleaned and embedded reference dataset of fake/real news articles is used for comparison.
+
+3.Cosine Similarity Calculation
+For each tweet, the app calculates the maximum cosine similarity to the embedded fake-news dataset.
+
+Three-Class Label Assignment
+Based on similarity thresholds:
+
+- Fake if similarity ≥ 0.70
+
+- Real if similarity ≤ 0.30
+
+- Uncertain if similarity is between 0.30 and 0.70
+
+4.Result Display
+The interface returns:
+
+- The assigned label for each tweet
+
+- Its similarity score (rounded to three decimals)
+
+- And, for Fake labels, an expandable “Explanation” placeholder (for future LLM integration)
+
+Advanced Features:
+Filter by Users and Topics
+The app allows interactive filtering to:
+
+- See which users have posted the most or least fake news
+
+- Analyze which topics or keywords are most affected by misinformation
+
+- Theme and Usability Options
+
+- Supports Dark Mode for improved readability
+
+- Offers basic sorting and keyword filtering for large datasets
+
 
 # 5 Discussion
 
 ## 5.1 Project Outcomes and Contributions
 
-Our project resulted in two key artifacts:
+Our project produced two core contributions:
 
-1. A semantic similarity-based classification system that labels political tweets as _true_, _false_, or _unsure_ using a multilingual transformer model.
-2. An interactive Streamlit app that enables users to test custom input statements against a known fake news dataset using TF-IDF + cosine similarity.
+1. A semantic similarity-based classification system that labels political tweets as **Fake**, **Real**, or **Uncertain**, using multilingual sentence embeddings from the `paraphrase-multilingual-MiniLM-L12-v2` model.
+2. An interactive and publicly accessible [Streamlit application](http://fakenewserkennung.streamlit.app) that enables users to upload political tweet datasets and perform real-time misinformation analysis based on transformer-based embeddings and cosine similarity.
 
-This dual-system architecture allows both scalable, automated classification and user-friendly manual inspection. Our approach introduces a novel three-way classification paradigm in a domain that predominantly relies on binary decisions. Moreover, by using multilingual sentence embeddings, the system can be adapted to various languages and cultural contexts.
+This dual-model approach—transformer-based backend and accessible frontend—balances accuracy with usability. It introduces a **novel three-class classification paradigm** into a research domain that still largely relies on **binary (true/false) decisions**. Furthermore, our system is **language-agnostic**, making it suitable for multilingual misinformation detection across different regions and cultures.
+
+Beyond classification, the app offers **interactive filtering**, such as:
+
+* Ranking users by the volume of misinformation,
+* Identifying **topics most affected by fake news**,
+* Switching between **Light and Dark Mode** for improved usability.
+
+These features make the tool not only technically robust but also **practically useful** for journalists, researchers, and the general public.
+
+---
 
 ## 5.2 Limitations
 
-Despite promising results, our approach and application face several limitations:
+Despite these contributions, several limitations remain:
 
-- Data Limitations:  
-    The quality and representativeness of the fake news dataset significantly affect model performance. If the dataset lacks coverage of certain topics or styles, the model may struggle with semantic mismatches.
-- Computational Constraints:  
-    Our work was conducted using free Google Colab resources, which limited training times, batch sizes, and model complexity. Larger experiments (e.g., fine-tuning transformer models) were not feasible under these constraints.
-- App Simplification:  
-    The Streamlit app uses TF-IDF for practical reasons (speed, local interpretability), but lacks the deep semantic precision of transformer-based models. It also does not provide detailed justifications or counter-arguments—which would be important in real-world fact-checking.
-- False Confidence in “Unsure” Results:  
-    The “unsure” category relies on fixed thresholds. Some statements may seem uncertain due to lack of match—not because they are inherently ambiguous. This can mislead users if not clearly explained.
+* **Data Limitations**:
+  Our fake news reference dataset is relatively small and may not cover the full thematic range of political discourse. This can result in **semantic mismatches** and misclassifications.
+
+* **Computational Constraints**:
+  All development was conducted on **free Google Colab** and local machines, limiting us from fine-tuning large-scale transformer models or testing on massive multilingual corpora.
+
+* **Simplified Thresholding**:
+  Label assignment is based on **fixed cosine similarity thresholds**, which may not generalize across topics or languages. The **“Uncertain”** label, in particular, risks being misinterpreted, as it might simply reflect insufficient reference data rather than genuine ambiguity.
+
+* **Explainability Gaps**:
+  Although the app displays similarity scores, it does not yet offer **human-readable justifications**. The placeholder “Explanation” panel in the UI is currently empty, indicating a future extension via LLM integration.
+
+---
 
 ## 5.3 Ethical Considerations
 
-Potential Dangers
+Several risks arise from deploying such a system:
 
-- Misuse of Classifications:  
-    A naïve application of the tool in political or journalistic contexts may result in oversimplified labelling. There is a risk of unintended censorship, especially if "false" labels are applied to tweets without context or explanation.
-- Bias and Discrimination:  
-    If the fake news dataset contains biases (e.g., more examples from certain political groups), the system may reflect or even amplify them. Multilingual models may also perform unevenly across languages, which could discriminate against non-English or low-resource contexts.
-- Transparency & Explainability:  
-    While we provide similarity scores and thresholds, the model does not explain why a statement is similar to fake news. This limits accountability and may influence user trust.
-- Social Impact:  
-    Algorithmic fact-checking can be helpful, but may also disregard alternative viewpoints, especially if implemented without proper oversight. Transparency and human review must remain part of the process.
+* **Misuse in Political Contexts**:
+  Automatic labelling of tweets as “Fake” could be misused in **political censorship**, especially when applied without nuance or context.
 
-Resources such as [AlgorithmWatch](https://algorithmwatch.org/en/) and [AI Now Institute](https://ainowinstitute.org/) emphasize these risks in their critical analyses of automated decision-making systems across Europe.
+* **Dataset and Model Biases**:
+  Our reference data may reflect biases (e.g., more samples from certain political directions), and **transformer models** themselves may reproduce societal and linguistic biases—especially in **non-English or low-resource languages**.
+
+* **Transparency and Trust**:
+  Without clear **rationales for classifications**, users may place undue trust in system outputs or become skeptical of legitimate warnings.
+
+* **Democratic Implications**:
+  Algorithmic classification tools must be **complemented by human judgment**, especially in political and journalistic environments. A false sense of certainty can delegitimize alternative perspectives or fuel polarization.
+
+Institutions like [AlgorithmWatch](https://algorithmwatch.org/en/) and the [AI Now Institute](https://ainowinstitute.org/) have emphasized the importance of **auditable, explainable, and accountable** AI systems—principles our project aims to follow in future iterations.
+
+---
 
 ## 5.4 Future Research Directions
 
-Our work opens several opportunities for future research:
+This project opens up several promising directions for further development:
 
-- Improved Fact-Alignment Models:  
-    Future systems could use retrieval-based methods (e.g., fact-check databases like Snopes, PolitiFact) and entailment modelling to assess factual accuracy more precisely.
-- Context-Aware Classification:  
-    Incorporating context from user history, event timelines, or quote-retweet networks may help better interpret a tweet's intent and truth value.
-- Interactive Counterfactual Explanations:  
-    Systems could provide "Why?" and "What if?" explanations—e.g., showing what a user could change in a sentence to make it more truthful or less misleading.
-- Crowdsourced Evaluation:  
-    Including user feedback and crowdsourced labels could help validate or adjust model classifications over time.
-- Research Question Suggestions:
-  - Can we train transformer models to detect “manipulative framing” rather than outright falsehoods?
-  - How can we ensure semantic similarity models avoid cultural or political bias across languages?
-  - What role should automated systems play in journalism and democratic accountability?
+* **LLM-Driven Explanation Generation**:
+  Integrating large language models to generate **natural language explanations** for each classification (e.g., summarizing the similar fake news entry).
+
+* **Dynamic Thresholding**:
+  Instead of fixed similarity thresholds, future systems could use **adaptive confidence intervals**, tuned per topic or source.
+
+* **Fact Retrieval Integration**:
+  Connecting the system with external **fact-check databases** (e.g., Snopes, PolitiFact) to enhance semantic alignment and factual grounding.
+
+* **Bias-Aware Evaluation**:
+  Future work should incorporate **cross-linguistic fairness checks** and **cultural robustness benchmarks** to avoid reinforcing biases in multilingual contexts.
+
+* **Interactive Feedback Loops**:
+  Including crowdsourced user feedback can help recalibrate thresholds, detect false positives/negatives, and adapt over time.
+
+**Sample Research Questions**:
+
+* How can semantic similarity systems differentiate between misinformation and manipulative framing?
+* What mechanisms ensure multilingual models avoid political bias?
+* Can hybrid human-AI systems enhance trust in journalism without suppressing dissent?
+
+---
+
+# 6 Conclusion
+
+This project demonstrates the feasibility and utility of a multilingual, semantic similarity-based system for political misinformation classification. By embedding tweets and comparing them against a labeled fake-news dataset using transformer-based models and cosine similarity, we introduce a scalable and explainable approach to **Fake–Real–Uncertain** classification.
+
+Our contributions go beyond academic modeling. The publicly available [Streamlit app](http://fakenewserkennung.streamlit.app) translates research into a **functional prototype** that users can interact with, explore, and analyze politically relevant data in real-time.
+
+Despite limitations related to data scope and interpretability, the system represents a step forward toward **language-aware, user-accessible, and ethically cautious** misinformation detection. Future development will focus on improving explainability, extending multilingual robustness, and integrating external fact sources—moving closer to trustworthy AI support for democratic discourse.
+
