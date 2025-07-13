@@ -4,6 +4,8 @@ import numpy as np
 import re
 import pickle
 import time
+import urllib.request
+import os
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 
@@ -168,6 +170,11 @@ if uploaded_file:
     # Embed tweets
     #with st.spinner("Embedding tweets with multilingual BERT..."):
     #    tweet_embeddings = model.encode(df['text_clean'].tolist(), batch_size=64, show_progress_bar=True)
+
+
+    if not os.path.exists("news_embeddings.pkl"):
+        url = "https://drive.google.com/file/d/1PsX7FFQBi1Yy81rCmVk9fw2UeFHOToyn/view?usp=drive_link"
+        urllib.request.urlretrieve(url, "news_embeddings.pkl")
 
     texts = df['text_clean'].tolist()
     tweet_embeddings = []
