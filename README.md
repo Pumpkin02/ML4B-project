@@ -28,7 +28,7 @@ This project aims to address this challenge by developing a machine learning pro
 
 [3.2 Data Understanding and Preparation ](#32-data-understanding-and-preparation)
 
-[3.3 Modeling and Evaluation ](#33-modeling-and-evaluation)
+[3.3 Modeling and Evaluation ](#33-model-and-evaluation)
 
 [4 Results ](#4-results)
 
@@ -117,84 +117,30 @@ By integrating semantic similarity analysis, multilingual processing, and a thre
 # 3 Methodology
 
 ## 3.1 General Methodology
-
-Our goal was to semantically assess political tweets by comparing them with a known fake/true news dataset and categorizing each tweet as true, false, or unclear. To do this, we built a two-part system:
-
-1. A backend pipeline for cleaning and preparing large-scale tweet data 
-2. A frontend interactive app for users to manually test statements using text similarity detection (TF-IDF + cosine similarity).
-
-We structured our approach as follows:
-
-1. Data Collection  
-    We gathered two datasets:
-    - A. jl-based dataset containing raw tweets from various ‘Bundestag’ members
-    - A fake/true news dataset containing labelled entries (true or false)
-2. Automated Preprocessing of Political Tweets  
-    Using a custom Python script (datacleaning.py) we performed the following:
-    - Parsed. jl files and extracted relevant fields (text, created_at, username)
-    - Cleaned each tweet using regex patterns:
-        - Removed emojis, mentions, hashtags, and URLs
-        - Preserved ‚Umlaute‘ and ß
-        - Lowercased the text
-    - Filtered out empty entries
-    - Saved results as .csv, splitting the file if it exceeded Excel’s row limit  
-        → See code in _Appendix A_
-3. Semantic Embedding & Similarity Analysis  
-    We embedded the cleaned tweet dataset and the fake/true news dataset using the multilingual model paraphrase-multilingual-MiniLM-L12-v2.  
-    For each tweet, we calculated the cosine similarity to both fake and true examples. Based on the scores:
-    - True: If most similar to a verified example
-    - False: If most similar to fake news
-    - Unsure: If similarity scores were too low or inconclusive
-4. Threshold-Based Three-Way Classification  
-    We defined similarity thresholds to assign one of the three labels. A tweet was labelled unsure if no significant match to either category could be found.
-5. Streamlit App Development (TF-IDF-Based Checker)  
-    To make the system accessible, we built a Streamlit web app:
-    - Allows users to upload fake news + tweet datasets
-    - Uses TF-IDF vectorization and cosine similarity to check user-entered statements
-    - Outputs a classification label (fake, real, or uncertain) based on the similarity score
-    - Integrated explanations and visualization of similarity score  
-        → See screenshot and example in _Section 5.2_
-6. Evaluation  
-    We manually reviewed output labels and performed basic accuracy checks on a subset of tweets. We also tested the app with known true and false claims.
+Our goal is to provide a lightweight, transparent pipeline that flags potential fake‑news tweets in real time.Firts of all we had to find a way to define fake and true tweets.We used at the beginning TF IDF which is based on text classification.It wasnt precise enough. So we had to substitute our model with Bert(Further explanation about the model in 3.3).With the new model we were able to bind in a reference courpus news_embedding.pkl which has labeled news articles.The next step was to update our Streamlit App.The new Streamlit App has better UI, more functions and performs accuratley with Bert. 
 
 ## 3.2 Data Understanding and Preparation
+The reference corpus as mentioned before is the multilingual news_embedding.pkl.A large part of the news is german and english.Furthermore the pkl consists of 12176 labeled news items.
+For cleaning measurements we lowercased every character, removed URL's and unncessary white space.---Embedding Preparation---
 
-Bundestag Twitter Data
 
-<https://faubox.rrze.uni-erlangen.de/getlink/fi8W52QUEdtmm7LEGLiDBD/twitter-bundestag-2022.tar.gz>
+## 3.3 Model and Evaluation
+**Model Architecture**\
+Tweet → SBERT (512 d) —►  
+     │  
+     ├─ Mean‐Similarity Score (Fake, True)  
+     └─ KNN‑Voting (K = 5)  
+               ↓  
+        Label ∈ {Fake, True, Unclear}
 
-Real & Fake News
+Each tweet is first embedded with the multilingual SBERT encoder (distiluse-base-multilingual-cased-v1, 512 d); we then compute its mean cosine similarity to the fake and true reference vectors, assigning the label to whichever class yields the higher average (with a small margin threshold to flag “Unclear” cases).
 
-<https://www.kaggle.com/datasets/razanaqvi14/real-and-fake-news>
+**Training**\
+No additional fine‑tuning was required; the SBERT checkpoint is frozen.The reference embeddings were generated offline once with the jupyter Notebook ML4B.ipynb.
 
-- The Bundestag dataset contains a .jl file with tweets from Members of Parliament, where each item includes metadata and the tweet content itself.
-- The Real & Fake News dataset consists of two CSV files: one with true news articles and the other with fake ones. Key attributes of this data include title, text, subject, and date of publication.
-- A notable challenge is the difference in data formats and data richness between the two datasets.
+**Evaluation**\
+On the 20 % test split, the mean-similarity method achieves 83 % accuracy (F1 = 0.78 for Fake, 0.86 for True). The alternative 5-NN voting approach lifts accuracy to 86 % (F1 = 0.81 / 0.85). Both methods are  available in the app, with raw similarity scores displayed so users can gauge the confidence of each prediction.
 
-## 3.3 Modeling and Evaluation
-
-We decided on a bag of words approach built around TF-IDF features.The data preprocessing starts with removing unnecessary characters such as emojis, URLs, hashtags, mentions etc. Each tweet is reduced to text, lower-cased and stripped of German stop-words. The cleaned tweets are then merged with a fake-news collection to form a single corpus. A TF-IDF vectoriser is trained unsupervised on this joint corpus so that terms from both domains appear in the vocabulary. At inference time the incoming text is transformed with that same vectoriser and its vector is compared with the cosine similarity to all stored fake-news vectors. We interpret the score with simple thresholds: 0.70 or higher is classed as Fake, 0.30 or lower as Real, and anything in between as Uncertain. The entire system runs in one Streamlit app.For evaluation we prepare a labelled validation set containing both real and fake texts. We will sweep the similarity threshold to find the point that achieves the preferred balance.
-
-## 3.4 Semantic Embedding & Similarity Analysis (updated)
-We now use the powerful Transformer model distiluse-base-multilingual-cased-v1 (replacing the previously used paraphrase-multilingual-MiniLM-L12-v2) to generate high-quality multilingual sentence embeddings. For each input tweet, we compute semantic similarity against curated fake and true news samples using two methods:
-
-Mean Similarity
-
-For each label (Fake or True), calculate the average cosine similarity between the tweet and all reference embeddings.
-
-Classify based on the higher average.
-
-If the difference between both averages is below a defined threshold (Δ_TH), the tweet is labeled as Unclear.
-
-Max Cosine Similarity
-
-Determine the maximum cosine similarity between the tweet and both the fake and true reference sets.
-
-Classification is based on which maximum is higher.
-
-If both maximums are close (below Δ_TH), the label is set to Unclear.
-
-→ This dual-method approach offers robustness: Mean handles noise and outliers well, while Max captures direct matches. Their combination improves reliability.
 
 
 # 4 Results
