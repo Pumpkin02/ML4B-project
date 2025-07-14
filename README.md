@@ -16,7 +16,7 @@ This project aims to address this challenge by developing a machine learning pro
 
 [2.1 Traditional Approaches to Fake News Detection](#21-traditional-approaches-to-fake-news-detection)
 
-[2.2 Political Tweets and Misinformation](#22-political-tweets-and-misinformation))
+[2.2 Political Tweets and Misinformation](#22-political-tweets-and-misinformation)
 
 [2.3 Multilingual and Cross-Lingual Models](#23-multilingual-and-cross-lingual-models)
 
@@ -24,11 +24,11 @@ This project aims to address this challenge by developing a machine learning pro
 
 [3 Methodology ](#3-methodology)
 
-[3.1 General Methodology ](#31-general-methodology)
+[3.1 Preprocessing ](#31-preprocessing)
 
-[3.2 Data Understanding and Preparation ](#32-data-understanding-and-preparation)
+[3.2 Embedding and reference set ](#32-embedding-and-reference-set)
 
-[3.3 Modeling and Evaluation ](#33-model-and-evaluation)
+[3.3 Prediction methods ](#33-prediction-methods)
 
 [4 Results ](#4-results)
 
@@ -114,7 +114,7 @@ By integrating semantic similarity analysis, multilingual processing, and a thre
 
 ---
 
-#s 3. Methodology
+# 3. Methodology
 
 This section describes the step-by-step process used to detect fake news using tweet similarity to known true/fake news articles. The full methodology consists of three main stages: preprocessing, embedding, and prediction.
 
