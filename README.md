@@ -114,32 +114,50 @@ By integrating semantic similarity analysis, multilingual processing, and a thre
 
 ---
 
-# 3 Methodology
+### 3. Methodology
 
-## 3.1 General Methodology
-Our goal is to provide a lightweight, transparent pipeline that flags potential fake‑news tweets in real time.Firts of all we had to find a way to define fake and true tweets.We used at the beginning TF IDF which is based on text classification.It wasnt precise enough. So we had to substitute our model with Bert(Further explanation about the model in 3.3).With the new model we were able to bind in a reference courpus news_embedding.pkl which has labeled news articles.The next step was to update our Streamlit App.The new Streamlit App has better UI, more functions and performs accuratley with Bert. 
+This section describes the step-by-step process used to detect fake news using tweet similarity to known true/fake news articles. The full methodology consists of three main stages: preprocessing, embedding, and prediction.
 
-## 3.2 Data Understanding and Preparation
-The reference corpus as mentioned before is the multilingual news_embedding.pkl.A large part of the news is german and english.Furthermore the pkl consists of 12176 labeled news items.
-For cleaning measurements we lowercased every character, removed URL's and unncessary white space.---Embedding Preparation---
+---
 
+#### 3.1 Preprocessing
 
-## 3.3 Model and Evaluation
-**Model Architecture**\
-Tweet → SBERT (512 d) —►  
-     │  
-     ├─ Mean‐Similarity Score (Fake, True)  
-     └─ KNN‑Voting (K = 5)  
-               ↓  
-        Label ∈ {Fake, True, Unclear}
+Before any analysis, the tweet texts are lightly cleaned to improve consistency and avoid noise in embedding:
 
-Each tweet is first embedded with the multilingual SBERT encoder (distiluse-base-multilingual-cased-v1, 512 d); we then compute its mean cosine similarity to the fake and true reference vectors, assigning the label to whichever class yields the higher average (with a small margin threshold to flag “Unclear” cases).
+- Removal of URLs using regular expressions
+- Trimming of excessive whitespace and newline characters
 
-**Training**\
-No additional fine‑tuning was required; the SBERT checkpoint is frozen.The reference embeddings were generated offline once with the jupyter Notebook ML4B.ipynb.
+This ensures that only the semantic content of the tweets is preserved for comparison.
 
-**Evaluation**\
-On the 20 % test split, the mean-similarity method achieves 83 % accuracy (F1 = 0.78 for Fake, 0.86 for True). The alternative 5-NN voting approach lifts accuracy to 86 % (F1 = 0.81 / 0.85). Both methods are  available in the app, with raw similarity scores displayed so users can gauge the confidence of each prediction.
+---
+
+#### 3.2 Embedding and Reference Set
+
+We utilize the **`distiluse-base-multilingual-cased-v1`** transformer model from SentenceTransformers to convert both the input tweets and the labeled news articles into dense vector embeddings. This model captures the semantic meaning of the text and supports multiple languages, making it well-suited for real-world tweet data.
+
+The labeled news articles (true or fake) are encoded in advance and stored as a **reference set** consisting of:
+- Embedding vectors (numerical representation)
+- Ground-truth labels (0 = fake, 1 = true)
+- Original text
+
+This cached reference allows us to efficiently compare each tweet against known examples.
+
+---
+
+#### 3.3 Prediction Methods
+
+After encoding, each tweet embedding is compared with the reference set using **cosine similarity**, a measure of semantic closeness between two vectors.
+
+We implement two different methods to make predictions:
+
+- **Mean Similarity**:  
+  Computes the average similarity between the tweet and all "true" articles, and separately with all "fake" articles. The label is determined by which group is semantically closer. If the difference is too small, the label is set to "Unclear".
+
+- **KNN Voting (Top-K Similarity)**:  
+  Identifies the top K most similar news articles and uses a majority vote among their labels. If the vote is close (e.g., 3 vs. 2), the label is also set to "Unclear".
+
+While both methods use the same similarity metric, their decision strategies differ. A detailed comparison of these two approaches can be found in Section **4.1**.
+
 
 
 
