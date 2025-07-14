@@ -114,13 +114,13 @@ By integrating semantic similarity analysis, multilingual processing, and a thre
 
 ---
 
-### 3. Methodology
+#s 3. Methodology
 
 This section describes the step-by-step process used to detect fake news using tweet similarity to known true/fake news articles. The full methodology consists of three main stages: preprocessing, embedding, and prediction.
 
 ---
 
-#### 3.1 Preprocessing
+## 3.1 Preprocessing
 
 Before any analysis, the tweet texts are lightly cleaned to improve consistency and avoid noise in embedding:
 
@@ -131,7 +131,7 @@ This ensures that only the semantic content of the tweets is preserved for compa
 
 ---
 
-#### 3.2 Embedding and Reference Set
+## 3.2 Embedding and Reference Set
 
 We utilize the **`distiluse-base-multilingual-cased-v1`** transformer model from SentenceTransformers to convert both the input tweets and the labeled news articles into dense vector embeddings. This model captures the semantic meaning of the text and supports multiple languages, making it well-suited for real-world tweet data.
 
@@ -144,7 +144,7 @@ This cached reference allows us to efficiently compare each tweet against known 
 
 ---
 
-#### 3.3 Prediction Methods
+## 3.3 Prediction Methods
 
 After encoding, each tweet embedding is compared with the reference set using **cosine similarity**, a measure of semantic closeness between two vectors.
 
