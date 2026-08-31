@@ -1,0 +1,48 @@
+============================================================
+REFERENCE CORPUS
+============================================================
+Total articles : 44898
+Fake (label 0) : 23481
+True (label 1) : 21417
+Embedding dim  : 512
+
+Test items     : 2000
+Reference items: 10000
+
+============================================================
+MEAN SIMILARITY
+============================================================
+Coverage (non-Unclear) : 89.6%
+Selective Accuracy     : 80.9%
+Macro-F1 (on decided)  : 0.783
+Accuracy, Unclear=wrong: 72.5%
+
+              precision    recall  f1-score   support
+
+        Fake      0.757     0.989     0.857      1044
+        True      0.972     0.557     0.709       748
+
+    accuracy                          0.809      1792
+   macro avg      0.865     0.773     0.783      1792
+weighted avg      0.847     0.809     0.795      1792
+
+
+============================================================
+KNN VOTING (K=5)
+============================================================
+Coverage (non-Unclear) : 81.3%
+Selective Accuracy     : 92.6%
+Macro-F1 (on decided)  : 0.926
+Accuracy, Unclear=wrong: 75.3%
+
+              precision    recall  f1-score   support
+
+        Fake      0.956     0.893     0.923       810
+        True      0.900     0.960     0.929       816
+
+    accuracy                          0.926      1626
+   macro avg      0.928     0.926     0.926      1626
+weighted avg      0.928     0.926     0.926      1626
+
+
+============================================================
